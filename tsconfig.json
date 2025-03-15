@@ -15,7 +15,10 @@
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "allowJs": true
+        "allowJs": true,
+        "paths": {
+            "@mkellsy/leap-client": ["../leap-client"]
+        }
     },
     "include": ["**/*.ts"],
     "exclude": ["coverage", "test", "lib", "node_modules"]
