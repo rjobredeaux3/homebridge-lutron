@@ -1,6 +1,6 @@
 import * as Leap from "@mkellsy/leap-client";
 
-import { API, Logging, Service } from "homebridge";
+import { API, CharacteristicValue, Logging, Service } from "homebridge";
 import { Action, Button } from "@mkellsy/hap-device";
 
 import { Common } from "./Common";
@@ -33,10 +33,13 @@ export class Keypad extends Common<Leap.Keypad> implements Device {
         );
 
         for (const button of device.buttons) {
+            const switchType = device.isPhantom
+                ? this.homebridge.hap.Service.StatefulProgrammableSwitch
+                : this.homebridge.hap.Service.StatelessProgrammableSwitch;
             const service =
-                this.accessory.getServiceById(this.homebridge.hap.Service.StatelessProgrammableSwitch, button.name) ||
+                this.accessory.getServiceById(switchType, button.name) ||
                 this.accessory.addService(
-                    this.homebridge.hap.Service.StatelessProgrammableSwitch,
+                    switchType,
                     button.name,
                     button.name,
                 );
@@ -44,12 +47,18 @@ export class Keypad extends Common<Leap.Keypad> implements Device {
             service.addLinkedService(labelService);
 
             service.setCharacteristic(this.homebridge.hap.Characteristic.Name, button.name);
-            service.setCharacteristic(this.homebridge.hap.Characteristic.ServiceLabelIndex, button.index);
+            if (!device.isPhantom) {
+                service.setCharacteristic(this.homebridge.hap.Characteristic.ServiceLabelIndex, button.index);
+            }
 
             service
                 .getCharacteristic(this.homebridge.hap.Characteristic.ProgrammableSwitchEvent)
-                .setProps({ maxValue: 2 });
-
+                .setProps({ maxValue: 2 })
+            if (device.isPhantom) {
+                service.getCharacteristic(this.homebridge.hap.Characteristic.ProgrammableSwitchOutputState)
+                    .onGet(() => 0)
+                    .onSet(this.onSetState.bind(this, button));
+            }
             this.services.set(button.id, service);
         }
     }
@@ -86,4 +95,14 @@ export class Keypad extends Common<Leap.Keypad> implements Device {
             }
         }
     }
+
+        /**
+     * Updates the device when a change comes in from Homebridge.
+     *
+     * @param value The characteristic value from Homebrtidge.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private onSetState = async (button: Button, _value: CharacteristicValue): Promise<void> => {
+        await this.device.pressButton(button);
+    };
 }
