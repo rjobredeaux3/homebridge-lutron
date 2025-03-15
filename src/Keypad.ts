@@ -103,6 +103,7 @@ export class Keypad extends Common<Leap.Keypad> implements Device {
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private onSetState = async (button: Button, _value: CharacteristicValue): Promise<void> => {
+        this.log.warn("Set!");
         await this.device.pressButton(button);
     };
 }

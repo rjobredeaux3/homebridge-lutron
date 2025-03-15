@@ -36,9 +36,12 @@ export class Platform implements DynamicPlatformPlugin {
         this.log = log;
         this.config = { ...defaults, ...config };
         this.homebridge = homebridge;
-
+        this.log.warn("Romain Ter");
         this.homebridge.on("didFinishLaunching", () => {
-            Leap.connect().on("Available", this.onAvailable).on("Action", this.onAction).on("Update", this.onUpdate);
+            Leap.connect(false, this.log)
+                .on("Available", this.onAvailable)
+                .on("Action", this.onAction)
+                .on("Update", this.onUpdate);
         });
     }
 
